@@ -6,15 +6,15 @@
 <title>World Cup 2026 — Prediction Pool</title>
 <style>
   :root{
-    --bg:#0b1220; --panel:#131c2e; --panel2:#1b2740; --line:#26344f;
-    --text:#e8eefb; --muted:#93a1c0; --accent:#3ddc84; --accent2:#ffd166;
-    --gold:#ffd166; --silver:#cfd8e8; --bronze:#e0a36a; --bad:#ff6b6b;
+    --bg:#ffffff; --panel:#ffffff; --panel2:#f1f4f9; --line:#e2e8f2;
+    --text:#1a2233; --muted:#6b7689; --accent:#16a34a; --accent2:#c2790c;
+    --gold:#c79a00; --silver:#8a93a5; --bronze:#b5752f; --bad:#dc2626;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
        background:var(--bg);color:var(--text);line-height:1.45}
   header{display:flex;align-items:center;justify-content:space-between;gap:12px;
-         padding:14px 18px;background:linear-gradient(90deg,#0e1830,#15233f);border-bottom:1px solid var(--line);
+         padding:14px 18px;background:#ffffff;border-bottom:1px solid var(--line);
          position:sticky;top:0;z-index:20}
   header h1{font-size:18px;margin:0;letter-spacing:.3px}
   header .who{font-size:13px;color:var(--muted);cursor:pointer}
@@ -22,12 +22,12 @@
   .tabs{display:flex;gap:6px;margin:0 0 16px}
   .tabs button{flex:0 0 auto;background:var(--panel);color:var(--muted);border:1px solid var(--line);
     padding:9px 16px;border-radius:10px;cursor:pointer;font-size:14px}
-  .tabs button.active{background:var(--accent);color:#06281a;border-color:var(--accent);font-weight:600}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  .tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,30,60,.05)}
   select,input{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
   input[type=number]{width:52px;text-align:center;-moz-appearance:textfield}
   input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  button.btn{background:var(--accent);color:#06281a;border:none;border-radius:10px;padding:10px 18px;
+  button.btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 18px;
     font-size:14px;font-weight:600;cursor:pointer}
   button.btn:disabled{opacity:.5;cursor:not-allowed}
   button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
@@ -44,9 +44,10 @@
   .pens{grid-column:1/-1;text-align:center;font-size:12px;color:var(--accent2);margin-top:4px}
   .pens select{padding:4px 8px;font-size:12px}
   .pts{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;display:inline-block}
-  .p3{background:#0f3b27;color:var(--accent)} .p2{background:#3a3413;color:var(--accent2)}
-  .p1{background:#2a3550;color:#b9c6e6} .p0{background:#3a1f24;color:var(--bad)}
-  .pb{background:#0f3b27;color:var(--accent)}
+  .p3{background:#dcfce7;color:#15803d} .p2{background:#fbedca;color:#b45309}
+  .p1{background:#e7ecf5;color:#475569} .p0{background:#fde2e2;color:#dc2626}
+  .pb{background:#dcfce7;color:#15803d}
+  .flag{width:24px;height:18px;border-radius:3px;object-fit:cover;flex:0 0 auto;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
   table{width:100%;border-collapse:collapse}
   th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}
   th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
@@ -58,7 +59,7 @@
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .modal{position:fixed;inset:0;background:rgba(4,8,16,.75);display:flex;align-items:center;justify-content:center;z-index:50}
   .modal .card{max-width:380px;width:90%}
-  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--accent);color:#06281a;
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;
     padding:10px 18px;border-radius:10px;font-weight:600;opacity:0;transition:opacity .25s;z-index:60}
   .toast.show{opacity:1}
   .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
@@ -184,6 +185,23 @@ const ROUND_NAMES = {MD1:"Group Stage — Matchday 1",MD2:"Group Stage — Match
 const ROUND_ORDER = ["MD1","MD2","MD3","R32","R16","QF","SF","3RD","FINAL"];
 const isKO = m => !["MD1","MD2","MD3"].includes(m.round);
 
+// Team -> ISO code for flag images (flagcdn.com). England & Scotland use their own flags.
+const FLAG = {
+  "Mexico":"mx","South Africa":"za","South Korea":"kr","Czechia":"cz",
+  "Canada":"ca","Switzerland":"ch","Qatar":"qa","Bosnia and Herzegovina":"ba",
+  "Brazil":"br","Morocco":"ma","Haiti":"ht","Scotland":"gb-sct",
+  "United States":"us","Paraguay":"py","Australia":"au","Türkiye":"tr",
+  "Germany":"de","Curaçao":"cw","Côte d'Ivoire":"ci","Ecuador":"ec",
+  "Netherlands":"nl","Japan":"jp","Tunisia":"tn","Sweden":"se",
+  "Belgium":"be","Egypt":"eg","Iran":"ir","New Zealand":"nz",
+  "Spain":"es","Cabo Verde":"cv","Saudi Arabia":"sa","Uruguay":"uy",
+  "France":"fr","Senegal":"sn","Norway":"no","Iraq":"iq",
+  "Argentina":"ar","Algeria":"dz","Austria":"at","Jordan":"jo",
+  "Portugal":"pt","Uzbekistan":"uz","Colombia":"co","Congo DR":"cd",
+  "England":"gb-eng","Croatia":"hr","Ghana":"gh","Panama":"pa"
+};
+const flag = t => FLAG[t] ? `<img class="flag" src="https://flagcdn.com/48x36/${FLAG[t]}.png" srcset="https://flagcdn.com/96x72/${FLAG[t]}.png 2x" alt="" loading="lazy">` : "";
+
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 let me = null;
 let matches = [], myPreds = {}, allPreds = [], players = [];
@@ -271,8 +289,8 @@ function matchRow(m){
   const row=el("div","match");
   const pred=myPreds[m.id]||{};
   const locked=isLocked(m);
-  const home=el("div","team home");home.innerHTML=`<span class="nm">${m.home}</span>`;
-  const away=el("div","team");away.innerHTML=`<span class="nm">${m.away}</span>`;
+  const home=el("div","team home");home.innerHTML=`<span class="nm">${m.home}</span>${flag(m.home)}`;
+  const away=el("div","team");away.innerHTML=`${flag(m.away)}<span class="nm">${m.away}</span>`;
   const mid=el("div","score");
   if(locked){
     const played=m.home_score!=null;
@@ -371,7 +389,8 @@ function renderAdminResults(){
   const round=$("#admRoundSel").value, list=$("#admList"); list.innerHTML="";
   matches.filter(m=>m.round===round).forEach(m=>{
     const r=el("div","adm-match");
-    const t=el("div");t.innerHTML=`<span class="small muted">${m.grp?"["+m.grp+"] ":""}</span>${m.home} <span class="muted">v</span> ${m.away}`;
+    const t=el("div");t.style.display="flex";t.style.alignItems="center";t.style.gap="6px";
+    t.innerHTML=`<span class="small muted">${m.grp?"["+m.grp+"] ":""}</span>${flag(m.home)} ${m.home} <span class="muted">v</span> ${flag(m.away)} ${m.away}`;
     const h=el("input");h.type="number";h.min=0;h.dataset.mid=m.id;h.dataset.s="home";h.value=m.home_score??"";
     const a=el("input");a.type="number";a.min=0;a.dataset.mid=m.id;a.dataset.s="away";a.value=m.away_score??"";
     const last=el("div");
