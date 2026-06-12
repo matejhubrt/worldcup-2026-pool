@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>World Cup 2026 — Prediction Pool</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#131c2e; --panel2:#1b2740; --line:#26344f;
+    --text:#e8eefb; --muted:#93a1c0; --accent:#3ddc84; --accent2:#ffd166;
+    --gold:#ffd166; --silver:#cfd8e8; --bronze:#e0a36a; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--text);line-height:1.45}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;
+         padding:14px 18px;background:linear-gradient(90deg,#0e1830,#15233f);border-bottom:1px solid var(--line);
+         position:sticky;top:0;z-index:20}
+  header h1{font-size:18px;margin:0;letter-spacing:.3px}
+  header .who{font-size:13px;color:var(--muted);cursor:pointer}
+  .wrap{max-width:980px;margin:0 auto;padding:18px}
+  .tabs{display:flex;gap:6px;margin:0 0 16px}
+  .tabs button{flex:0 0 auto;background:var(--panel);color:var(--muted);border:1px solid var(--line);
+    padding:9px 16px;border-radius:10px;cursor:pointer;font-size:14px}
+  .tabs button.active{background:var(--accent);color:#06281a;border-color:var(--accent);font-weight:600}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  select,input{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
+  input[type=number]{width:52px;text-align:center;-moz-appearance:textfield}
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  button.btn{background:var(--accent);color:#06281a;border:none;border-radius:10px;padding:10px 18px;
+    font-size:14px;font-weight:600;cursor:pointer}
+  button.btn:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+  .grp-title{font-size:12px;letter-spacing:1px;color:var(--accent2);text-transform:uppercase;margin:14px 0 6px}
+  .match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;
+    padding:9px 8px;border-bottom:1px solid var(--line)}
+  .match:last-child{border-bottom:none}
+  .team{display:flex;align-items:center;gap:8px;min-width:0}
+  .team.home{justify-content:flex-end;text-align:right}
+  .team .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .score{display:flex;align-items:center;gap:6px}
+  .vs{color:var(--muted);font-size:12px}
+  .meta{font-size:11px;color:var(--muted);text-align:center;grid-column:1/-1;margin-top:-2px}
+  .pens{grid-column:1/-1;text-align:center;font-size:12px;color:var(--accent2);margin-top:4px}
+  .pens select{padding:4px 8px;font-size:12px}
+  .pts{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;display:inline-block}
+  .p3{background:#0f3b27;color:var(--accent)} .p2{background:#3a3413;color:var(--accent2)}
+  .p1{background:#2a3550;color:#b9c6e6} .p0{background:#3a1f24;color:var(--bad)}
+  .pb{background:#0f3b27;color:var(--accent)}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  td.num,th.num{text-align:center}
+  .rank{font-weight:700}
+  tr.me{background:rgba(61,220,132,.08)}
+  .medal1 .rank{color:var(--gold)} .medal2 .rank{color:var(--silver)} .medal3 .rank{color:var(--bronze)}
+  .muted{color:var(--muted)} .small{font-size:12.5px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .modal{position:fixed;inset:0;background:rgba(4,8,16,.75);display:flex;align-items:center;justify-content:center;z-index:50}
+  .modal .card{max-width:380px;width:90%}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--accent);color:#06281a;
+    padding:10px 18px;border-radius:10px;font-weight:600;opacity:0;transition:opacity .25s;z-index:60}
+  .toast.show{opacity:1}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+  .adm-match{display:grid;grid-template-columns:1fr 64px 64px auto;gap:8px;align-items:center;
+    padding:7px 0;border-bottom:1px solid var(--line)}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚽ World Cup 2026 — Prediction Pool</h1>
+  <div class="who" id="who"></div>
+</header>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="tabs">
+    <button data-tab="predict" class="active">My Predictions</button>
+    <button data-tab="board">Leaderboard</button>
+    <button data-tab="admin">Admin</button>
+  </div>
+
+  <!-- PREDICTIONS -->
+  <section id="tab-predict">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <label class="muted small">Round</label>
+          <select id="roundSel"></select>
+        </div>
+        <button class="btn" id="saveRound">Save round</button>
+      </div>
+      <div class="legend">
+        <span><b style="color:var(--accent)">3</b> exact score</span>
+        <span><b style="color:var(--accent2)">2</b> right goal difference</span>
+        <span><b style="color:#b9c6e6">1</b> right winner</span>
+        <span><b style="color:var(--bad)">0</b> wrong</span>
+        <span><b style="color:var(--accent)">+1</b> right penalty winner (knockout draws)</span>
+      </div>
+      <p class="small muted" id="koNote" style="margin:6px 0 0">Knockout matches are scored on the result after extra time. If you predict a draw, pick who wins the shootout for a bonus point.</p>
+    </div>
+    <div id="predList"></div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section id="tab-board" style="display:none">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <strong>Standings</strong>
+        <select id="boardScope"><option value="all">All rounds</option></select>
+      </div>
+      <table id="boardTable"><thead><tr>
+        <th>#</th><th>Player</th><th class="num">Pts</th>
+        <th class="num">Exact</th><th class="num">GD</th><th class="num">Win</th><th class="num">Pens</th><th class="num">Played</th>
+      </tr></thead><tbody></tbody></table>
+      <p class="small muted" id="boardEmpty" style="display:none">No results entered yet — points appear once the Admin enters match scores.</p>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="tab-admin" style="display:none">
+    <div class="card" id="adminLock">
+      <strong>Admin</strong>
+      <p class="small muted">Enter match results and manage fixtures. Ask the organiser for the admin password.</p>
+      <div class="row"><input type="password" id="adminPw" placeholder="Admin password"/>
+        <button class="btn" id="adminUnlock">Unlock</button></div>
+    </div>
+    <div id="adminPanel" style="display:none">
+      <div class="card">
+        <strong>Add a knockout fixture</strong>
+        <p class="small muted">Add these once the bracket is known. Set kickoff so predictions lock on time.</p>
+        <div class="row">
+          <select id="afRound">
+            <option value="R32">Round of 32</option><option value="R16">Round of 16</option>
+            <option value="QF">Quarter-final</option><option value="SF">Semi-final</option>
+            <option value="3RD">Third place</option><option value="FINAL">Final</option>
+          </select>
+          <input id="afHome" placeholder="Home team"/><input id="afAway" placeholder="Away team"/>
+          <input id="afKick" type="datetime-local"/>
+          <button class="btn" id="afAdd">Add fixture</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <strong>Enter results</strong>
+          <select id="admRoundSel"></select>
+        </div>
+        <p class="small muted">For knockout matches, enter the score after extra time. If it was a draw (went to penalties), also pick the shootout winner.</p>
+        <div id="admList"></div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="admSave">Save results</button></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- LOGIN -->
+<div class="modal" id="login">
+  <div class="card">
+    <h2 style="margin:.2em 0">Join the pool</h2>
+    <p class="small muted">Pick a name and a personal PIN. New name = new account. Use the same name + PIN next time to edit your picks.</p>
+    <div style="display:grid;gap:10px">
+      <input id="liName" placeholder="Your name" maxlength="24"/>
+      <input id="liPin" placeholder="PIN (4+ chars)" type="password"/>
+      <button class="btn" id="liGo">Enter</button>
+      <div class="small" id="liErr" style="color:var(--bad)"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ======================================================================
+   CONFIG — fill these in (see SETUP.md)
+   ====================================================================== */
+const SUPABASE_URL   = "https://ktpyacsmokbijoxkingo.supabase.co";
+const SUPABASE_ANON  = "sb_publishable_GXFKBj62HjBFYoiSBYn8WQ_Rr_QLWbX";
+const ADMIN_PASSWORD = "worldcup26";   // give this only to whoever enters results
+/* ====================================================================== */
+
+const ROUND_NAMES = {MD1:"Group Stage — Matchday 1",MD2:"Group Stage — Matchday 2",MD3:"Group Stage — Matchday 3",
+  R32:"Round of 32",R16:"Round of 16",QF:"Quarter-finals",SF:"Semi-finals","3RD":"Third-place play-off",FINAL:"Final"};
+const ROUND_ORDER = ["MD1","MD2","MD3","R32","R16","QF","SF","3RD","FINAL"];
+const isKO = m => !["MD1","MD2","MD3"].includes(m.round);
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let me = null;
+let matches = [], myPreds = {}, allPreds = [], players = [];
+
+const $ = s => document.querySelector(s);
+const el = (t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e;};
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
+const isLocked = m => m.kickoff && new Date(m.kickoff) <= new Date();
+
+/* ---------- Scoring: highest single tier (3/2/1/0) + knockout pen bonus ---------- */
+function scoreOne(pred, m){
+  if(m.home_score==null||m.away_score==null) return null;            // not played
+  if(!pred || pred.home==null || pred.away==null) return {pts:0,tier:'none',bonus:0};
+  const ph=pred.home, pa=pred.away;
+  let base, tier;
+  if(ph===m.home_score && pa===m.away_score){ base=3; tier='exact'; }
+  else {
+    const pd=ph-pa, ad=m.home_score-m.away_score;
+    if(pd===ad){ base=2; tier='gd'; }                                // right margin (incl. draws)
+    else if(Math.sign(pd)===Math.sign(ad)){ base=1; tier='win'; }    // right winner only
+    else { base=0; tier='none'; }
+  }
+  let bonus=0;
+  // Knockout: if you predicted a draw and the match was drawn after ET, +1 for the right shootout winner
+  if(isKO(m) && ph===pa && m.home_score===m.away_score && m.pen_winner && pred.pen_winner===m.pen_winner) bonus=1;
+  return {pts:base+bonus, tier, bonus};
+}
+
+/* ---------------------------- Auth ---------------------------- */
+async function login(){
+  const name=$("#liName").value.trim(), pin=$("#liPin").value.trim();
+  $("#liErr").textContent="";
+  if(name.length<2) return $("#liErr").textContent="Enter a name.";
+  if(pin.length<4)  return $("#liErr").textContent="PIN must be at least 4 characters.";
+  let {data:found} = await sb.from("players").select("*").eq("name",name).maybeSingle();
+  if(found){
+    if(found.pin!==pin) return $("#liErr").textContent="Wrong PIN for that name.";
+    me={id:found.id,name:found.name};
+  }else{
+    const {data:created,error}=await sb.from("players").insert({name,pin}).select().single();
+    if(error) return $("#liErr").textContent="Could not create account: "+error.message;
+    me={id:created.id,name:created.name};
+  }
+  localStorage.setItem("wc_me",JSON.stringify({...me,pin}));
+  start();
+}
+async function tryResume(){
+  const raw=localStorage.getItem("wc_me"); if(!raw) return false;
+  try{ const s=JSON.parse(raw);
+    const {data}=await sb.from("players").select("*").eq("id",s.id).maybeSingle();
+    if(data && data.pin===s.pin){ me={id:data.id,name:data.name}; return true; }
+  }catch(e){}
+  return false;
+}
+
+/* ---------------------------- Data ---------------------------- */
+async function loadAll(){
+  const [{data:ms},{data:ps},{data:pl}] = await Promise.all([
+    sb.from("matches").select("*").order("round").order("sort").order("id"),
+    sb.from("predictions").select("*"),
+    sb.from("players").select("id,name")
+  ]);
+  matches = ms||[]; allPreds = ps||[]; players = pl||[];
+  myPreds={}; allPreds.filter(p=>p.player_id===me.id).forEach(p=>myPreds[p.match_id]={home:p.home,away:p.away,pen_winner:p.pen_winner});
+}
+const roundsPresent = () => ROUND_ORDER.filter(r=>matches.some(m=>m.round===r));
+function fillRoundSelect(sel){
+  sel.innerHTML="";
+  roundsPresent().forEach(r=>{const o=el("option");o.value=r;o.textContent=ROUND_NAMES[r]||r;sel.appendChild(o);});
+}
+
+/* ---------------------------- Predictions UI ---------------------------- */
+function renderPredictions(){
+  const round=$("#roundSel").value, list=$("#predList"); list.innerHTML="";
+  const ms=matches.filter(m=>m.round===round);
+  const groups=[...new Set(ms.map(m=>m.grp||""))];
+  groups.forEach(g=>{
+    const card=el("div","card");
+    if(g){const h=el("div","grp-title");h.textContent="Group "+g;card.appendChild(h);}
+    ms.filter(m=>(m.grp||"")===g).forEach(m=>card.appendChild(matchRow(m)));
+    list.appendChild(card);
+  });
+}
+function matchRow(m){
+  const row=el("div","match");
+  const pred=myPreds[m.id]||{};
+  const locked=isLocked(m);
+  const home=el("div","team home");home.innerHTML=`<span class="nm">${m.home}</span>`;
+  const away=el("div","team");away.innerHTML=`<span class="nm">${m.away}</span>`;
+  const mid=el("div","score");
+  if(locked){
+    const played=m.home_score!=null;
+    const ph=pred.home??"–", pa=pred.away??"–";
+    let pts="";
+    if(played){const s=scoreOne(pred,m);pts=`<span class="pts p${Math.min(s.pts,3)}">+${s.pts}</span>`;}
+    mid.innerHTML=`<b>${ph}</b><span class="vs">-</span><b>${pa}</b> ${pts}`;
+    row.append(home,mid,away);
+    const meta=el("div","meta");
+    let extra=played?` · actual ${m.home_score}-${m.away_score}`:"";
+    if(played && isKO(m) && m.pen_winner) extra+=` (${m.pen_winner==='home'?m.home:m.away} won pens)`;
+    meta.textContent="🔒 locked"+extra;
+    row.append(meta);
+    if(isKO(m) && pred.pen_winner){
+      const pn=el("div","pens");pn.textContent="Your shootout pick: "+(pred.pen_winner==='home'?m.home:m.away);
+      row.append(pn);
+    }
+  }else{
+    const hi=el("input");hi.type="number";hi.min=0;hi.dataset.mid=m.id;hi.dataset.side="home";hi.value=pred.home??"";
+    const ai=el("input");ai.type="number";ai.min=0;ai.dataset.mid=m.id;ai.dataset.side="away";ai.value=pred.away??"";
+    mid.append(hi,el("span","vs"),ai);mid.children[1].textContent="-";
+    row.append(home,mid,away);
+    if(isKO(m)){
+      const pn=el("div","pens");
+      const sel=el("select");sel.dataset.mid=m.id;sel.dataset.pen="1";
+      sel.innerHTML=`<option value="">If a draw, who wins on penalties?</option>`+
+        `<option value="home">${m.home} win on penalties</option>`+
+        `<option value="away">${m.away} win on penalties</option>`;
+      sel.value=pred.pen_winner||"";
+      const sync=()=>{ pn.style.display=(hi.value!==""&&ai.value!==""&&hi.value===ai.value)?"":"none"; };
+      hi.addEventListener("input",sync);ai.addEventListener("input",sync);
+      pn.appendChild(sel);row.append(pn);sync();
+    }
+  }
+  return row;
+}
+async function saveRound(){
+  const nums=[...document.querySelectorAll('#predList input[type=number]')];
+  const pens=[...document.querySelectorAll('#predList select[data-pen]')];
+  const byMid={};
+  nums.forEach(i=>{(byMid[i.dataset.mid]=byMid[i.dataset.mid]||{})[i.dataset.side]=i.value;});
+  pens.forEach(s=>{(byMid[s.dataset.mid]=byMid[s.dataset.mid]||{}).pen=s.value;});
+  const rows=[];
+  for(const mid in byMid){
+    const v=byMid[mid];
+    if(v.home===""||v.home===undefined||v.away===""||v.away===undefined) continue;
+    const draw = Number(v.home)===Number(v.away);
+    rows.push({player_id:me.id,match_id:Number(mid),home:Number(v.home),away:Number(v.away),
+      pen_winner: draw?(v.pen||null):null, updated_at:new Date().toISOString()});
+  }
+  if(!rows.length) return toast("Nothing to save");
+  const {error}=await sb.from("predictions").upsert(rows,{onConflict:"player_id,match_id"});
+  if(error) return toast("Error: "+error.message);
+  rows.forEach(r=>myPreds[r.match_id]={home:r.home,away:r.away,pen_winner:r.pen_winner});
+  toast("Saved "+rows.length+" picks ✓");
+}
+
+/* ---------------------------- Leaderboard ---------------------------- */
+function computeBoard(scope){
+  const predBy={}; allPreds.forEach(p=>{(predBy[p.player_id]=predBy[p.player_id]||{})[p.match_id]=p;});
+  const scored=matches.filter(m=>m.home_score!=null && (scope==="all"||m.round===scope));
+  const rows=players.map(pl=>{
+    let pts=0,ex=0,gd=0,win=0,pen=0,played=0;
+    scored.forEach(m=>{
+      const p=(predBy[pl.id]||{})[m.id]; if(!p) return;
+      played++;
+      const s=scoreOne(p,m);
+      pts+=s.pts; if(s.tier==='exact')ex++; else if(s.tier==='gd')gd++; else if(s.tier==='win')win++;
+      if(s.bonus)pen++;
+    });
+    return {name:pl.name,id:pl.id,pts,ex,gd,win,pen,played};
+  });
+  rows.sort((a,b)=> b.pts-a.pts || b.ex-a.ex || b.gd-a.gd || a.name.localeCompare(b.name));
+  return rows;
+}
+function renderBoard(){
+  const rows=computeBoard($("#boardScope").value);
+  const tb=$("#boardTable tbody"); tb.innerHTML="";
+  $("#boardEmpty").style.display=matches.some(m=>m.home_score!=null)?"none":"block";
+  rows.forEach((r,i)=>{
+    const tr=el("tr");
+    if(r.id===me.id)tr.classList.add("me");
+    if(i<3 && r.played)tr.classList.add("medal"+(i+1));
+    tr.innerHTML=`<td class="rank">${i+1}</td><td>${r.name}</td><td class="num"><b>${r.pts}</b></td>
+      <td class="num">${r.ex}</td><td class="num">${r.gd}</td><td class="num">${r.win}</td><td class="num">${r.pen}</td><td class="num muted">${r.played}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function fillBoardScope(){
+  const sel=$("#boardScope"); sel.innerHTML='<option value="all">All rounds</option>';
+  roundsPresent().forEach(r=>{const o=el("option");o.value=r;o.textContent=ROUND_NAMES[r]||r;sel.appendChild(o);});
+}
+
+/* ---------------------------- Admin ---------------------------- */
+function renderAdminResults(){
+  const round=$("#admRoundSel").value, list=$("#admList"); list.innerHTML="";
+  matches.filter(m=>m.round===round).forEach(m=>{
+    const r=el("div","adm-match");
+    const t=el("div");t.innerHTML=`<span class="small muted">${m.grp?"["+m.grp+"] ":""}</span>${m.home} <span class="muted">v</span> ${m.away}`;
+    const h=el("input");h.type="number";h.min=0;h.dataset.mid=m.id;h.dataset.s="home";h.value=m.home_score??"";
+    const a=el("input");a.type="number";a.min=0;a.dataset.mid=m.id;a.dataset.s="away";a.value=m.away_score??"";
+    const last=el("div");
+    if(isKO(m)){
+      const sel=el("select");sel.dataset.mid=m.id;sel.dataset.s="pen";sel.style.fontSize="12px";
+      sel.innerHTML=`<option value="">pens —</option><option value="home">${m.home} pens</option><option value="away">${m.away} pens</option>`;
+      sel.value=m.pen_winner||"";last.appendChild(sel);
+    }
+    r.append(t,h,a,last);
+    list.appendChild(r);
+  });
+}
+async function adminSaveResults(){
+  const ins=[...document.querySelectorAll('#admList input'),...document.querySelectorAll('#admList select')];
+  const by={}; ins.forEach(i=>{(by[i.dataset.mid]=by[i.dataset.mid]||{})[i.dataset.s]=i.value;});
+  let n=0;
+  for(const mid in by){
+    const v=by[mid];
+    const home = (v.home===""||v.home===undefined)?null:Number(v.home);
+    const away = (v.away===""||v.away===undefined)?null:Number(v.away);
+    const pen  = (home!=null&&away!=null&&home===away)?(v.pen||null):null;
+    const {error}=await sb.from("matches").update({home_score:home,away_score:away,pen_winner:pen}).eq("id",Number(mid));
+    if(!error)n++;
+  }
+  await loadAll(); renderBoard(); renderAdminResults();
+  toast("Saved "+n+" results ✓");
+}
+async function adminAddFixture(){
+  const round=$("#afRound").value,home=$("#afHome").value.trim(),away=$("#afAway").value.trim();
+  const kick=$("#afKick").value? new Date($("#afKick").value).toISOString():null;
+  if(!home||!away) return toast("Enter both teams");
+  const {error}=await sb.from("matches").insert({round,grp:null,home,away,kickoff:kick,sort:99});
+  if(error) return toast("Error: "+error.message);
+  $("#afHome").value="";$("#afAway").value="";$("#afKick").value="";
+  await loadAll(); fillRoundSelect($("#roundSel")); fillRoundSelect($("#admRoundSel")); fillBoardScope();
+  renderAdminResults(); toast("Fixture added ✓");
+}
+
+/* ---------------------------- Boot ---------------------------- */
+function tab(name){
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
+  ["predict","board","admin"].forEach(t=>$("#tab-"+t).style.display=t===name?"":"none");
+  if(name==="board"){fillBoardScope();renderBoard();}
+}
+async function start(){
+  $("#login").style.display="none"; $("#app").style.display="";
+  $("#who").textContent="Signed in as "+me.name;
+  await loadAll();
+  fillRoundSelect($("#roundSel")); fillRoundSelect($("#admRoundSel")); fillBoardScope();
+  renderPredictions();
+}
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+$("#roundSel").onchange=renderPredictions;
+$("#saveRound").onclick=saveRound;
+$("#boardScope").onchange=renderBoard;
+$("#admRoundSel").onchange=renderAdminResults;
+$("#admSave").onclick=adminSaveResults;
+$("#afAdd").onclick=adminAddFixture;
+$("#liGo").onclick=login;
+$("#liPin").addEventListener("keydown",e=>{if(e.key==="Enter")login();});
+$("#adminUnlock").onclick=()=>{
+  if($("#adminPw").value===ADMIN_PASSWORD){$("#adminLock").style.display="none";$("#adminPanel").style.display="";renderAdminResults();}
+  else toast("Wrong password");
+};
+$("#who").onclick=()=>{ if(confirm("Sign out?")){localStorage.removeItem("wc_me");location.reload();} };
+
+(async()=>{
+  if(SUPABASE_URL.startsWith("PASTE")){ $("#login").innerHTML='<div class="card"><h2>Not configured yet</h2><p class="small muted">Open index.html and fill in your Supabase URL and key (see SETUP.md).</p></div>'; return; }
+  if(await tryResume()) start();
+})();
+</script>
+</body>
+</html>
