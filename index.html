@@ -463,5 +463,93 @@ $("#who").onclick=()=>{ if(confirm("Sign out?")){localStorage.removeItem("wc_me"
   if(await tryResume()) start();
 })();
 </script>
+
+<style>
+#pgOv{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:99999;padding:24px;overflow:auto}
+#pgOv.on{display:flex}
+#pgCard{background:var(--panel,#fff);color:var(--text,#1a2233);max-width:640px;width:100%;border:1px solid var(--line,#e2e8f2);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);padding:18px 18px 22px}
+#pgCard h2{margin:0;font-size:20px}
+#pgSub{color:var(--muted,#6b7689);font-size:13px;margin:2px 0 14px}
+#pgClose{float:right;cursor:pointer;border:none;background:var(--panel2,#f1f4f9);color:var(--text,#1a2233);width:32px;height:32px;border-radius:8px;font-size:18px;line-height:1}
+.pgTbl{width:100%;border-collapse:collapse;font-size:14px}
+.pgTbl th,.pgTbl td{padding:9px 6px;border-bottom:1px solid var(--line,#e2e8f2);text-align:left;vertical-align:top}
+.pgTbl th{color:var(--muted,#6b7689);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.pgTeam{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
+.pgTeam img{width:20px;height:15px;border-radius:2px;object-fit:cover;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.pgSc{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.pgRound{color:var(--muted,#6b7689);font-size:12px}
+.pgEmpty{color:var(--muted,#6b7689);padding:18px 2px}
+#boardTable tbody tr{cursor:pointer}
+#boardTable tbody tr:hover{background:var(--panel2,#f1f4f9)}
+</style>
+<div id="pgOv"><div id="pgCard"><button id="pgClose" aria-label="Close">&times;</button><h2 id="pgTitle"></h2><div id="pgSub">Guesses are shown only for matches that have already kicked off.</div><div id="pgBody"></div></div></div>
+<script>
+(function(){
+  var SB='https://ktpyacsmokbijoxkingo.supabase.co';
+  var K='sb_publishable_GXFKBj62HjBFYoiSBYn8WQ_Rr_QLWbX';
+  var H={apikey:K,Authorization:'Bearer '+K};
+  var FLAG={'Canada':'ca','Mexico':'mx','United States':'us','USA':'us','Brazil':'br','Argentina':'ar','Paraguay':'py','Uruguay':'uy','Colombia':'co','Ecuador':'ec','Peru':'pe','Chile':'cl','Venezuela':'ve','Bolivia':'bo','Panama':'pa','Costa Rica':'cr','Jamaica':'jm','Honduras':'hn','Haiti':'ht','Curacao':'cw','Curaçao':'cw','Morocco':'ma','Switzerland':'ch','Qatar':'qa','Bosnia and Herzegovina':'ba','Germany':'de','Netherlands':'nl','Japan':'jp','Australia':'au','Turkey':'tr','Türkiye':'tr','Scotland':'gb-sct','England':'gb-eng','Wales':'gb-wls','France':'fr','Spain':'es','Portugal':'pt','Italy':'it','Croatia':'hr','Belgium':'be','South Korea':'kr','Korea Republic':'kr','Saudi Arabia':'sa','Iran':'ir','Senegal':'sn','Ghana':'gh','Nigeria':'ng','Egypt':'eg','Tunisia':'tn','Algeria':'dz','Cameroon':'cm','Congo DR':'cd','DR Congo':'cd','Cote dIvoire':'ci','Côte d Ivoire':'ci','Cabo Verde':'cv','Cape Verde':'cv','Norway':'no','Denmark':'dk','Austria':'at','Poland':'pl','Czechia':'cz','Czech Republic':'cz','Ukraine':'ua','Serbia':'rs','New Zealand':'nz','South Africa':'za','Jordan':'jo','Uzbekistan':'uz','Iraq':'iq','United Arab Emirates':'ae','Greece':'gr','Sweden':'se','Cuba':'cu','Guatemala':'gt'};
+  var players=[];
+  function esc(s){return (''+s).replace(/[&<>]/g,function(m){return m==='&'?'&amp;':m==='<'?'&lt;':'&gt;';});}
+  function flagImg(t){var c=FLAG[t];if(!c){c=FLAG[(t||'').replace(/[^A-Za-z ]/g,'').trim()];}if(!c)return '';return '<img src="https://flagcdn.com/40x30/'+c+'.png" alt="">';}
+  function api(p){return fetch(SB+'/rest/v1/'+p,{headers:H}).then(function(r){return r.ok?r.json():Promise.reject(r.status);});}
+  function loadPlayers(){if(players.length)return Promise.resolve();return api('players?select=id,name').then(function(p){players=p.slice().sort(function(a,b){return (''+b.name).length-(''+a.name).length;});});}
+  function loadGuesses(id){
+    return api('player_guesses_locked?player_id=eq.'+id+'&order=kickoff').catch(function(){
+      var now=Date.now();
+      return Promise.all([
+        api('predictions?player_id=eq.'+id+'&select=match_id,home,away,pen_winner'),
+        api('matches?select=id,round,grp,home,away,kickoff,home_score,away_score,pen_winner')
+      ]).then(function(res){
+        var preds=res[0], mById={}; res[1].forEach(function(m){mById[m.id]=m;});
+        var rows=[];
+        preds.forEach(function(p){var m=mById[p.match_id];if(!m)return;if(new Date(m.kickoff).getTime()>=now)return;
+          rows.push({round:m.round,grp:m.grp,home_team:m.home,away_team:m.away,kickoff:m.kickoff,pred_home:p.home,pred_away:p.away,pred_pen_winner:p.pen_winner,actual_home:m.home_score,actual_away:m.away_score,actual_pen_winner:m.pen_winner});});
+        rows.sort(function(a,b){return new Date(a.kickoff)-new Date(b.kickoff);});
+        return rows;
+      });
+    });
+  }
+  function rowHtml(g){
+    var teams='<div class=pgTeam>'+flagImg(g.home_team)+'<span>'+esc(g.home_team)+'</span><span class=pgRound>v</span>'+flagImg(g.away_team)+'<span>'+esc(g.away_team)+'</span></div>';
+    var guess=g.pred_home+'–'+g.pred_away;
+    if(g.pred_pen_winner){guess+=' <span class=pgRound>(pen: '+esc(g.pred_pen_winner==='home'?g.home_team:g.away_team)+')</span>';}
+    var res;
+    if(g.actual_home==null||g.actual_away==null){res='<span class=pgRound>not played yet</span>';}
+    else{res='<span class=pgSc>'+g.actual_home+'–'+g.actual_away+'</span>';if(g.actual_pen_winner){res+=' <span class=pgRound>(pen: '+esc(g.actual_pen_winner==='home'?g.home_team:g.away_team)+')</span>';}}
+    var label=esc(g.round||'')+(g.grp?(' · Group '+esc(g.grp)):'');
+    return '<tr><td><div class=pgRound>'+label+'</div>'+teams+'</td><td class=pgSc>'+guess+'</td><td>'+res+'</td></tr>';
+  }
+  function open(id,name){
+    document.getElementById('pgTitle').textContent=name+"'s guesses";
+    var body=document.getElementById('pgBody');
+    body.innerHTML='<div class=pgEmpty>Loading…</div>';
+    document.getElementById('pgOv').classList.add('on');
+    loadGuesses(id).then(function(rows){
+      if(!rows||!rows.length){body.innerHTML='<div class=pgEmpty>No guesses on locked matches yet.</div>';return;}
+      var h='<table class=pgTbl><thead><tr><th>Match</th><th>Their guess</th><th>Result</th></tr></thead><tbody>';
+      rows.forEach(function(g){h+=rowHtml(g);});
+      h+='</tbody></table>';
+      body.innerHTML=h;
+    }).catch(function(){body.innerHTML='<div class=pgEmpty>Could not load guesses.</div>';});
+  }
+  function close(){document.getElementById('pgOv').classList.remove('on');}
+  document.addEventListener('click',function(e){
+    var ov=document.getElementById('pgOv');
+    if(e.target===ov){close();return;}
+    if(e.target&&e.target.id==='pgClose'){close();return;}
+    var tr=e.target.closest&&e.target.closest('#boardTable tbody tr');
+    if(!tr)return;
+    loadPlayers().then(function(){
+      var txt=tr.textContent||'';
+      var hit=null;
+      for(var i=0;i<players.length;i++){if(txt.indexOf(players[i].name)>=0){hit=players[i];break;}}
+      if(hit)open(hit.id,hit.name);
+    });
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+})();
+</script>
+
 </body>
 </html>
