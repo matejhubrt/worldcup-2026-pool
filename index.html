@@ -66,6 +66,27 @@
   .adm-match{display:grid;grid-template-columns:1fr 64px 64px auto;gap:8px;align-items:center;
     padding:7px 0;border-bottom:1px solid var(--line)}
   a{color:var(--accent)}
+  /* ---- knockout bracket ---- */
+  .bracket-wrap{background:#0e1525;border:1px solid #1e2940;border-radius:14px;padding:16px;overflow-x:auto;margin-bottom:14px}
+  .bracket{display:flex;gap:20px;min-width:760px;align-items:stretch}
+  .bround{display:flex;flex-direction:column;flex:1;min-width:140px}
+  .bround-h{color:#8fa3c8;font-size:11px;letter-spacing:1px;text-transform:uppercase;text-align:center;padding-bottom:10px;font-weight:700}
+  .bround-body{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:10px}
+  .bnode{background:#16203a;border:1px solid #243352;border-radius:10px;padding:6px 8px;position:relative}
+  .bround:not(:last-child) .bnode::after{content:"";position:absolute;top:50%;right:-20px;width:20px;height:1px;background:#2c3c5e}
+  .bteam{display:flex;align-items:center;gap:7px;padding:3px 0}
+  .bteam+.bteam{border-top:1px solid #1f2c47}
+  .bflag{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+  .bflag-tbd{background:#243352;display:inline-block}
+  .bnm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#dde6f5;font-size:12.5px}
+  .bteam.badv .bnm{color:#5fe0a0;font-weight:700}
+  .bval{margin-left:auto}
+  .bval b{color:#fff;font-size:13px}
+  input.binp{width:38px;text-align:center;background:#0e1525;color:#fff;border:1px solid #2c3c5e;border-radius:6px;padding:4px;font-size:13px}
+  .bpen{margin-top:5px}
+  .bpen select{width:100%;background:#0e1525;color:#cdd9ee;border:1px solid #2c3c5e;font-size:11px;padding:3px 5px}
+  .bmeta{margin-top:5px;font-size:11px;color:#8fa3c8;text-align:center}
+  .third-card .bnode{max-width:300px;margin:6px auto 0}
 </style>
 </head>
 <body>
@@ -272,10 +293,20 @@ function fillRoundSelect(sel){
   sel.innerHTML="";
   roundsPresent().forEach(r=>{const o=el("option");o.value=r;o.textContent=ROUND_NAMES[r]||r;sel.appendChild(o);});
 }
+const GROUP_ROUNDS=["MD1","MD2","MD3"];
+const koRoundsPresent = () => ROUND_ORDER.filter(r=>!GROUP_ROUNDS.includes(r) && matches.some(m=>m.round===r));
+function fillPredictRound(){
+  const sel=$("#roundSel"); const cur=sel.value; sel.innerHTML="";
+  GROUP_ROUNDS.filter(r=>matches.some(m=>m.round===r))
+    .forEach(r=>{const o=el("option");o.value=r;o.textContent="Matchday "+r.slice(2);sel.appendChild(o);});
+  if(koRoundsPresent().length){const o=el("option");o.value="KO";o.textContent="Knockouts";sel.appendChild(o);}
+  if(cur && [...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
 
 /* ---------------------------- Predictions UI ---------------------------- */
 function renderPredictions(){
   const round=$("#roundSel").value, list=$("#predList"); list.innerHTML="";
+  if(round==="KO"){ renderBracket(list); return; }
   const ms=matches.filter(m=>m.round===round);
   const groups=[...new Set(ms.map(m=>m.grp||""))];
   groups.forEach(g=>{
@@ -326,6 +357,64 @@ function matchRow(m){
     }
   }
   return row;
+}
+/* ---------------------------- Knockout bracket ---------------------------- */
+const KO_COLS=[["R32","Round of 32"],["R16","Round of 16"],["QF","Quarter-finals"],["SF","Semi-finals"],["FINAL","Final"]];
+function bracketNode(m){
+  const node=el("div","bnode");
+  const locked=isLocked(m), played=m.home_score!=null, pred=myPreds[m.id]||{};
+  [["home",m.home],["away",m.away]].forEach(([side,team])=>{
+    const tr=el("div","bteam");
+    const f = FLAG[team] ? `<img class="bflag" src="https://flagcdn.com/48x36/${FLAG[team]}.png" alt="">` : `<span class="bflag bflag-tbd"></span>`;
+    tr.innerHTML=`${f}<span class="bnm">${team}</span>`;
+    const val=el("span","bval");
+    if(locked){
+      val.innerHTML=`<b>${(side==="home"?pred.home:pred.away)??"\u2013"}</b>`;
+      if(played && ((side==="home"&&m.home_score>m.away_score)||(side==="away"&&m.away_score>m.home_score)||m.pen_winner===side)) tr.classList.add("badv");
+    }else{
+      const inp=el("input","binp");inp.type="number";inp.min=0;inp.dataset.mid=m.id;inp.dataset.side=side;inp.value=(side==="home"?pred.home:pred.away)??"";
+      val.appendChild(inp);
+    }
+    tr.appendChild(val); node.appendChild(tr);
+  });
+  if(!locked){
+    if(isKO(m)){
+      const pn=el("div","bpen");
+      const sel=el("select");sel.dataset.mid=m.id;sel.dataset.pen="1";
+      sel.innerHTML=`<option value="">draw \u2192 who wins pens?</option><option value="home">${m.home}</option><option value="away">${m.away}</option>`;
+      sel.value=pred.pen_winner||"";
+      const sync=()=>{const h=node.querySelector('input[data-side=home]'),a=node.querySelector('input[data-side=away]');pn.style.display=(h.value!==""&&a.value!==""&&h.value===a.value)?"":"none";};
+      node.querySelectorAll('input').forEach(i=>i.addEventListener("input",sync));
+      pn.appendChild(sel);node.appendChild(pn);sync();
+    }
+  }else{
+    const meta=el("div","bmeta");
+    let t = played?`${m.home_score}-${m.away_score}`:"\uD83D\uDD12 locked";
+    if(played&&m.pen_winner)t+=` \u00b7 ${m.pen_winner==='home'?m.home:m.away} pens`;
+    if(played){const s=scoreOne(pred,m); if(s)t+=` \u00b7 +${s.pts}`;}
+    meta.textContent=t;node.appendChild(meta);
+  }
+  return node;
+}
+function renderBracket(list){
+  const wrap=el("div","bracket-wrap"), brk=el("div","bracket");
+  KO_COLS.forEach(([code,label])=>{
+    const ms=matches.filter(m=>m.round===code).sort((a,b)=>(a.sort||0)-(b.sort||0)||a.id-b.id);
+    if(!ms.length) return;
+    const col=el("div","bround");
+    const hd=el("div","bround-h");hd.textContent=label;col.appendChild(hd);
+    const body=el("div","bround-body");
+    ms.forEach(m=>body.appendChild(bracketNode(m)));
+    col.appendChild(body); brk.appendChild(col);
+  });
+  wrap.appendChild(brk); list.appendChild(wrap);
+  const third=matches.filter(m=>m.round==="3RD");
+  if(third.length){
+    const c=el("div","card third-card");
+    const h=el("div","bround-h");h.style.color="var(--accent2)";h.textContent="Third-place play-off";c.appendChild(h);
+    third.forEach(m=>c.appendChild(bracketNode(m)));
+    list.appendChild(c);
+  }
 }
 async function saveRound(){
   const nums=[...document.querySelectorAll('#predList input[type=number]')];
@@ -425,7 +514,7 @@ async function adminAddFixture(){
   const {error}=await sb.from("matches").insert({round,grp:null,home,away,kickoff:kick,sort:99});
   if(error) return toast("Error: "+error.message);
   $("#afHome").value="";$("#afAway").value="";$("#afKick").value="";
-  await loadAll(); fillRoundSelect($("#roundSel")); fillRoundSelect($("#admRoundSel")); fillBoardScope();
+  await loadAll(); fillPredictRound(); fillRoundSelect($("#admRoundSel")); fillBoardScope();
   renderAdminResults(); toast("Fixture added ✓");
 }
 
@@ -439,7 +528,7 @@ async function start(){
   $("#login").style.display="none"; $("#app").style.display="";
   $("#who").textContent="Signed in as "+me.name;
   await loadAll();
-  fillRoundSelect($("#roundSel")); fillRoundSelect($("#admRoundSel")); fillBoardScope();
+  fillPredictRound(); fillRoundSelect($("#admRoundSel")); fillBoardScope();
   renderPredictions();
 }
 
