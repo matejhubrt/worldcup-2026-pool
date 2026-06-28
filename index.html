@@ -67,25 +67,25 @@
     padding:7px 0;border-bottom:1px solid var(--line)}
   a{color:var(--accent)}
   /* ---- knockout bracket ---- */
-  .bracket-wrap{background:#0e1525;border:1px solid #1e2940;border-radius:14px;padding:16px;overflow-x:auto;margin-bottom:14px}
+  .bracket-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow-x:auto;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,30,60,.05)}
   .bracket{display:flex;gap:20px;min-width:760px;align-items:stretch}
   .bround{display:flex;flex-direction:column;flex:1;min-width:140px}
-  .bround-h{color:#8fa3c8;font-size:11px;letter-spacing:1px;text-transform:uppercase;text-align:center;padding-bottom:10px;font-weight:700}
+  .bround-h{color:var(--accent2);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-align:center;padding-bottom:10px;font-weight:700}
   .bround-body{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:10px}
-  .bnode{background:#16203a;border:1px solid #243352;border-radius:10px;padding:6px 8px;position:relative}
-  .bround:not(:last-child) .bnode::after{content:"";position:absolute;top:50%;right:-20px;width:20px;height:1px;background:#2c3c5e}
+  .bnode{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 8px;position:relative}
+  .bround:not(:last-child) .bnode::after{content:"";position:absolute;top:50%;right:-20px;width:20px;height:1px;background:var(--line)}
   .bteam{display:flex;align-items:center;gap:7px;padding:3px 0}
-  .bteam+.bteam{border-top:1px solid #1f2c47}
-  .bflag{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
-  .bflag-tbd{background:#243352;display:inline-block}
-  .bnm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#dde6f5;font-size:12.5px}
-  .bteam.badv .bnm{color:#5fe0a0;font-weight:700}
+  .bteam+.bteam{border-top:1px solid var(--line)}
+  .bflag{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:0 0 auto;box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+  .bflag-tbd{background:#dbe2ee;display:inline-block}
+  .bnm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);font-size:12.5px}
+  .bteam.badv .bnm{color:var(--accent);font-weight:700}
   .bval{margin-left:auto}
-  .bval b{color:#fff;font-size:13px}
-  input.binp{width:38px;text-align:center;background:#0e1525;color:#fff;border:1px solid #2c3c5e;border-radius:6px;padding:4px;font-size:13px}
+  .bval b{color:var(--text);font-size:13px}
+  input.binp{width:38px;text-align:center;background:#fff;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px;font-size:13px}
   .bpen{margin-top:5px}
-  .bpen select{width:100%;background:#0e1525;color:#cdd9ee;border:1px solid #2c3c5e;font-size:11px;padding:3px 5px}
-  .bmeta{margin-top:5px;font-size:11px;color:#8fa3c8;text-align:center}
+  .bpen select{width:100%;background:#fff;color:var(--text);border:1px solid var(--line);font-size:11px;padding:3px 5px}
+  .bmeta{margin-top:5px;font-size:11px;color:var(--muted);text-align:center}
   .third-card .bnode{max-width:300px;margin:6px auto 0}
 </style>
 </head>
