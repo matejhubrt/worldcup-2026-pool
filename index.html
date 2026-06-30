@@ -248,7 +248,15 @@ function scoreOne(pred, m){
   let bonus=0;
   // Knockout: if you predicted a draw and the match was drawn after ET, +1 for the right shootout winner
   if(isKO(m) && ph===pa && m.home_score===m.away_score && m.pen_winner && pred.pen_winner===m.pen_winner) bonus=1;
-  return {pts:base+bonus, tier, bonus};
+  let pts=base+bonus;
+  // Knockout advancer floor: correctly picking the team that advances always scores at least 1
+  // (e.g. you predicted a draw with the right team on pens, but it actually won in normal time).
+  if(isKO(m)){
+    const actualAdv = m.home_score>m.away_score ? 'home' : (m.away_score>m.home_score ? 'away' : m.pen_winner);
+    const predAdv   = ph>pa ? 'home' : (pa>ph ? 'away' : (pred.pen_winner||null));
+    if(actualAdv && predAdv===actualAdv && pts<1) pts=1;
+  }
+  return {pts, tier, bonus};
 }
 
 /* ---------------------------- Auth ---------------------------- */
